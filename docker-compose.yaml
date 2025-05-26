@@ -8,7 +8,7 @@ services:
     ports:
       - "11434:11434"
     volumes:
-      - "/var/lib/door/ollama:/root/.ollama"
+      - "/var/lib/door-llm/ollama:/root/.ollama"
     devices:
       - /dev/kfd
       - /dev/dri
@@ -16,6 +16,13 @@ services:
       OLLAMA_CONTEXT_LENGTH: 32786
       OLLAMA_KV_CACHE_TYPE: "${CONTEXT_QUANT_TYPE:-f16}"
 
+  tika:
+    image: apache/tika:latest-full
+    container_name: tika
+    pull_policy: always
+    ports:
+      - 9998:9998
+    restart: unless-stopped
 
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
@@ -23,13 +30,18 @@ services:
     restart: unless-stopped
     depends_on:
       - ollama
+      - tika
     ports:
       - "${OPENWEBUI_PORT:-3030}:8080"
     volumes:
-      - "/var/lib/door/open-webui:/app/backend/data"
+      - "/var/lib/door-llm/open-webui:/app/backend/data"
     extra_hosts:
       - "host.docker.internal:host-gateway"
-
-volumes:
-  ollama:
-  open-webui:
+    environment:
+      - ENABLE_SIGNUP=False
+      - ENABLE_LOGIN_FORM=False
+      - DEFAULT_USER_ROLE=admin
+      - ENABLE_API_KEY_ENDPOINT_RESTRICTIONS=False
+      - ENABLE_OPENAI_API=False
+      - WEBUI_AUTH=False
+      - OLLAMA_BASE_URL=http://ollama:11434
