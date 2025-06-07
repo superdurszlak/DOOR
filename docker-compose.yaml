@@ -15,6 +15,11 @@ services:
     environment:
       OLLAMA_CONTEXT_LENGTH: 32786
       OLLAMA_KV_CACHE_TYPE: "${CONTEXT_QUANT_TYPE:-f16}"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://ollama:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   tika:
     image: apache/tika:latest-full
